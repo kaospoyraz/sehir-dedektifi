@@ -3,573 +3,380 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Şehir Dedektifi - İstanbul'un Gizli Hikayeleri</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Şehir Dedektifi</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding-bottom: 70px;
         }
+        .header {
+            background: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-size: 20px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stats { display: flex; gap: 15px; font-weight: 600; }
+        .container { padding: 20px; max-width: 800px; margin: 0 auto; }
+        .intro {
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .intro h2 { font-size: 22px; margin-bottom: 10px; }
+        .intro p { color: #666; line-height: 1.6; }
+        .story-card {
+            background: white;
+            padding: 18px;
+            border-radius: 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .story-card:active { transform: scale(0.98); }
+        .story-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+        .story-location { color: #666; font-size: 13px; margin-bottom: 6px; }
+        .story-points { color: #667eea; font-weight: 700; }
+        .difficulty {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            color: white;
+            margin-top: 8px;
+        }
+        .easy { background: #4CAF50; }
+        .medium { background: #FF9800; }
+        .hard { background: #f44336; }
+        .completed { background: #4CAF50; color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px; margin-top: 8px; display: inline-block; }
 
 ```
-    body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        height: 100vh;
-        overflow: hidden;
-    }
-
-    .app-container {
-        height: 100vh;
-        display: flex;
-        flex-direction: column;
-    }
-
-    /* Header */
-    .header {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        padding: 15px 20px;
-        box-shadow: 0 2px 20px rgba(0,0,0,0.1);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        z-index: 1000;
-    }
-
-    .logo {
-        font-size: 24px;
-        font-weight: 800;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    .user-stats {
-        display: flex;
-        gap: 15px;
-        align-items: center;
-    }
-
-    .stat {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        font-size: 14px;
-        font-weight: 600;
-        color: #333;
-    }
-
-    .stat-icon {
-        font-size: 20px;
-    }
-
-    /* Map Container */
-    #map {
-        flex: 1;
-        position: relative;
-    }
-
-    /* Bottom Navigation */
-    .bottom-nav {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        padding: 10px 0;
-        box-shadow: 0 -2px 20px rgba(0,0,0,0.1);
-        display: flex;
-        justify-content: space-around;
-        align-items: center;
-    }
-
-    .nav-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 5px;
-        padding: 10px 20px;
-        cursor: pointer;
-        transition: all 0.3s;
-        border-radius: 12px;
-    }
-
-    .nav-item:hover, .nav-item.active {
-        background: rgba(102, 126, 234, 0.1);
-    }
-
-    .nav-icon {
-        font-size: 24px;
-    }
-
-    .nav-label {
-        font-size: 11px;
-        font-weight: 600;
-        color: #666;
-    }
-
-    .nav-item.active .nav-label {
-        color: #667eea;
-    }
-
-    /* Story Modal */
-    .story-modal {
+    .modal {
+        display: none;
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0,0,0,0.9);
-        z-index: 2000;
-        display: none;
-        animation: fadeIn 0.3s;
+        background: rgba(0,0,0,0.95);
+        z-index: 1000;
+        overflow-y: auto;
     }
-
-    .story-modal.active {
+    .modal.active { display: block; }
+    .modal-header {
+        padding: 15px 20px;
         display: flex;
-        flex-direction: column;
+        justify-content: flex-end;
+        position: sticky;
+        top: 0;
+        background: rgba(0,0,0,0.8);
+        z-index: 10;
     }
-
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-
-    .story-header {
-        padding: 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: rgba(0,0,0,0.5);
-    }
-
     .close-btn {
         background: rgba(255,255,255,0.2);
         border: none;
         color: white;
-        font-size: 28px;
         width: 40px;
         height: 40px;
         border-radius: 50%;
+        font-size: 24px;
         cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
     }
-
-    .story-content {
-        flex: 1;
-        overflow-y: auto;
-        padding: 20px;
-        color: white;
-    }
-
-    .story-image {
-        width: 100%;
-        border-radius: 16px;
-        margin-bottom: 20px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-    }
-
-    .story-title {
-        font-size: 28px;
-        font-weight: 800;
-        margin-bottom: 10px;
-        color: #fff;
-    }
-
-    .story-location {
-        font-size: 14px;
-        color: #aaa;
-        margin-bottom: 20px;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-
-    .story-text {
-        font-size: 16px;
-        line-height: 1.8;
-        color: #e0e0e0;
-        margin-bottom: 30px;
-    }
-
-    .story-difficulty {
-        display: inline-block;
-        padding: 8px 16px;
-        background: rgba(255,255,255,0.1);
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-        margin-bottom: 20px;
-    }
-
+    .modal-content { padding: 20px; color: white; max-width: 700px; margin: 0 auto; }
+    .story-image { width: 100%; border-radius: 12px; margin-bottom: 15px; }
+    .modal-title { font-size: 24px; font-weight: 800; margin-bottom: 10px; }
+    .modal-location { color: #aaa; margin-bottom: 15px; }
+    .story-text { line-height: 1.7; font-size: 15px; margin-bottom: 25px; }
+    
     .quiz-section {
         background: rgba(255,255,255,0.05);
         padding: 20px;
-        border-radius: 16px;
+        border-radius: 12px;
         margin-top: 20px;
     }
-
-    .quiz-title {
-        font-size: 20px;
-        font-weight: 700;
-        margin-bottom: 15px;
-    }
-
-    .quiz-question {
-        font-size: 16px;
-        margin-bottom: 15px;
-        color: #fff;
-    }
-
-    .quiz-options {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-
+    .quiz-title { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+    .quiz-question { font-size: 15px; margin-bottom: 12px; }
     .quiz-option {
         background: rgba(255,255,255,0.1);
-        padding: 15px;
-        border-radius: 12px;
+        padding: 12px;
+        border-radius: 10px;
+        margin-bottom: 8px;
         cursor: pointer;
-        transition: all 0.3s;
         border: 2px solid transparent;
     }
-
-    .quiz-option:hover {
-        background: rgba(255,255,255,0.2);
-        border-color: #667eea;
-    }
-
-    .quiz-option.correct {
-        background: rgba(76, 175, 80, 0.3);
-        border-color: #4CAF50;
-    }
-
-    .quiz-option.wrong {
-        background: rgba(244, 67, 54, 0.3);
-        border-color: #f44336;
-    }
-
-    .reward-section {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 20px;
-        border-radius: 16px;
-        margin-top: 20px;
+    .quiz-option:active { opacity: 0.8; }
+    .quiz-option.correct { background: rgba(76, 175, 80, 0.4); border-color: #4CAF50; }
+    .quiz-option.wrong { background: rgba(244, 67, 54, 0.4); border-color: #f44336; }
+    
+    .reward {
         text-align: center;
-    }
-
-    .reward-icon {
-        font-size: 48px;
-        margin-bottom: 10px;
-    }
-
-    .reward-text {
-        font-size: 18px;
-        font-weight: 700;
-    }
-
-    /* Custom Marker Styles */
-    .custom-marker {
-        width: 40px;
-        height: 40px;
+        padding: 30px;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: 3px solid white;
-        border-radius: 50% 50% 50% 0;
-        transform: rotate(-45deg);
-        box-shadow: 0 3px 10px rgba(0,0,0,0.3);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        animation: bounce 2s infinite;
+        border-radius: 12px;
+        margin-top: 15px;
     }
-
-    .custom-marker::after {
-        content: '📍';
-        transform: rotate(45deg);
-        font-size: 20px;
-    }
-
-    @keyframes bounce {
-        0%, 100% { transform: rotate(-45deg) translateY(0); }
-        50% { transform: rotate(-45deg) translateY(-10px); }
-    }
-
-    .marker-easy { background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); }
-    .marker-medium { background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); }
-    .marker-hard { background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%); }
-
-    /* Profile Section */
-    .profile-section {
+    .reward-icon { font-size: 50px; margin-bottom: 10px; }
+    .reward-text { font-size: 18px; font-weight: 700; }
+    
+    .bottom-nav {
         position: fixed;
-        top: 0;
+        bottom: 0;
         left: 0;
         right: 0;
-        bottom: 0;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        z-index: 1500;
-        display: none;
-        overflow-y: auto;
-        padding: 20px;
-    }
-
-    .profile-section.active {
-        display: block;
-    }
-
-    .profile-header {
+        background: white;
+        padding: 10px 0;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
         display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 30px;
+        justify-content: space-around;
+        z-index: 100;
     }
-
+    .nav-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 8px 20px;
+        cursor: pointer;
+        border: none;
+        background: none;
+        border-radius: 12px;
+    }
+    .nav-btn.active { background: rgba(102, 126, 234, 0.1); }
+    .nav-icon { font-size: 22px; margin-bottom: 4px; }
+    .nav-label { font-size: 11px; font-weight: 600; color: #666; }
+    .nav-btn.active .nav-label { color: #667eea; }
+    
+    .profile-page { display: none; padding: 20px; color: white; padding-bottom: 80px; }
+    .profile-page.active { display: block; }
     .profile-avatar {
-        width: 80px;
-        height: 80px;
+        width: 90px;
+        height: 90px;
         background: white;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 40px;
-        margin: 0 auto 20px;
+        font-size: 45px;
+        margin: 25px auto;
         box-shadow: 0 5px 20px rgba(0,0,0,0.2);
     }
-
-    .profile-name {
-        text-align: center;
-        color: white;
-        font-size: 24px;
-        font-weight: 700;
-        margin-bottom: 10px;
+    .profile-name { text-align: center; font-size: 26px; font-weight: 800; margin-bottom: 8px; }
+    .profile-level { text-align: center; font-size: 15px; opacity: 0.8; margin-bottom: 25px; }
+    .stats-box {
+        background: rgba(255,255,255,0.1);
+        padding: 18px;
+        border-radius: 14px;
+        margin-bottom: 18px;
     }
-
-    .profile-level {
-        text-align: center;
-        color: rgba(255,255,255,0.8);
-        font-size: 14px;
-        margin-bottom: 30px;
+    .stat-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        font-size: 15px;
     }
-
+    .stat-row:last-child { margin-bottom: 0; }
+    .section-title { font-size: 18px; font-weight: 700; margin: 22px 0 12px; }
     .badges-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 15px;
-        margin-top: 20px;
+        gap: 12px;
     }
-
     .badge {
         background: rgba(255,255,255,0.1);
-        backdrop-filter: blur(10px);
-        padding: 20px;
-        border-radius: 16px;
-        text-align: center;
-        border: 2px solid rgba(255,255,255,0.2);
-    }
-
-    .badge.unlocked {
-        background: rgba(255,255,255,0.2);
-        border-color: rgba(255,255,255,0.5);
-    }
-
-    .badge-icon {
-        font-size: 40px;
-        margin-bottom: 10px;
-        filter: grayscale(100%);
-    }
-
-    .badge.unlocked .badge-icon {
-        filter: grayscale(0%);
-    }
-
-    .badge-name {
-        font-size: 12px;
-        color: white;
-        font-weight: 600;
-    }
-
-    .section-title {
-        color: white;
-        font-size: 20px;
-        font-weight: 700;
-        margin: 30px 0 15px;
-    }
-
-    /* Leaderboard */
-    .leaderboard-section {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        z-index: 1500;
-        display: none;
-        overflow-y: auto;
-        padding: 20px;
-    }
-
-    .leaderboard-section.active {
-        display: block;
-    }
-
-    .leaderboard-item {
-        background: rgba(255,255,255,0.1);
-        backdrop-filter: blur(10px);
-        padding: 15px 20px;
+        padding: 18px 10px;
         border-radius: 12px;
-        margin-bottom: 10px;
-        display: flex;
-        align-items: center;
-        gap: 15px;
+        text-align: center;
     }
-
-    .leaderboard-rank {
-        font-size: 24px;
-        font-weight: 800;
-        color: white;
-        min-width: 40px;
+    .badge.unlocked { background: rgba(255,255,255,0.2); }
+    .badge-icon {
+        font-size: 34px;
+        margin-bottom: 6px;
+        filter: grayscale(100%);
+        opacity: 0.5;
     }
-
-    .leaderboard-info {
-        flex: 1;
-    }
-
-    .leaderboard-name {
-        color: white;
-        font-weight: 600;
-        font-size: 16px;
-    }
-
-    .leaderboard-discoveries {
-        color: rgba(255,255,255,0.7);
-        font-size: 14px;
-    }
-
-    .leaderboard-points {
-        color: white;
-        font-weight: 700;
-        font-size: 20px;
-    }
-
-    .back-btn {
-        background: rgba(255,255,255,0.2);
-        border: none;
-        color: white;
-        padding: 10px 20px;
-        border-radius: 20px;
-        font-weight: 600;
-        cursor: pointer;
-        margin-bottom: 20px;
-    }
-
-    /* Loading animation */
-    .pulse {
-        animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
-    }
+    .badge.unlocked .badge-icon { filter: none; opacity: 1; }
+    .badge-name { font-size: 11px; font-weight: 600; }
 </style>
 ```
 
 </head>
 <body>
-    <div class="app-container">
-        <!-- Header -->
-        <div class="header">
-            <div class="logo">🔍 Şehir Dedektifi</div>
-            <div class="user-stats">
-                <div class="stat">
-                    <span class="stat-icon">⭐</span>
-                    <span id="userPoints">0</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-icon">🏆</span>
-                    <span id="userBadges">0</span>
-                </div>
-            </div>
+    <div class="header">
+        <div class="logo">🔍 Şehir Dedektifi</div>
+        <div class="stats">
+            <div>⭐ <span id="points">0</span></div>
+            <div>🏆 <span id="badges">0</span></div>
         </div>
+    </div>
 
 ```
-    <!-- Map -->
-    <div id="map"></div>
-
-    <!-- Bottom Navigation -->
-    <div class="bottom-nav">
-        <div class="nav-item active" onclick="showMap()">
-            <div class="nav-icon">🗺️</div>
-            <div class="nav-label">Keşfet</div>
-        </div>
-        <div class="nav-item" onclick="showProfile()">
-            <div class="nav-icon">👤</div>
-            <div class="nav-label">Profil</div>
-        </div>
-        <div class="nav-item" onclick="showLeaderboard()">
-            <div class="nav-icon">🏅</div>
-            <div class="nav-label">Sıralama</div>
-        </div>
+<div class="container" id="main">
+    <div class="intro">
+        <h2>📍 İstanbul'un Gizli Hikayeleri</h2>
+        <p>Şehrin gizemli hikayelerini keşfet, quiz çöz, puan kazan!</p>
     </div>
-
-    <!-- Story Modal -->
-    <div class="story-modal" id="storyModal">
-        <div class="story-header">
-            <div></div>
-            <button class="close-btn" onclick="closeStory()">×</button>
-        </div>
-        <div class="story-content" id="storyContent">
-            <!-- Dynamic content will be inserted here -->
-        </div>
-    </div>
-
-    <!-- Profile Section -->
-    <div class="profile-section" id="profileSection">
-        <button class="back-btn" onclick="showMap()">← Geri</button>
-        
-        <div class="profile-avatar">🕵️</div>
-        <div class="profile-name">İstanbul Kâşifi</div>
-        <div class="profile-level">Seviye 1 - Çırak Dedektif</div>
-
-        <div class="section-title">📊 İstatistikler</div>
-        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 16px;">
-            <div style="color: white; margin-bottom: 10px;">
-                <strong>Keşfedilen Hikayeler:</strong> <span id="profileStories">0</span>/20
-            </div>
-            <div style="color: white; margin-bottom: 10px;">
-                <strong>Toplam Puan:</strong> <span id="profilePoints">0</span>
-            </div>
-            <div style="color: white;">
-                <strong>Kazanılan Rozetler:</strong> <span id="profileBadgesCount">0</span>/5
-            </div>
-        </div>
-
-        <div class="section-title">🏆 Rozetler</div>
-        <div class="badges-grid" id="badgesGrid">
-            <!-- Dynamic badges will be inserted here -->
-        </div>
-    </div>
-
-    <!-- Leaderboard Section -->
-    <div class="leaderboard-section" id="leaderboardSection">
-        <button class="back-btn" onclick="showMap()">← Geri</button>
-        
-        <div class="section-title">🏅 Bu Haftanın Liderleri</div>
-        <div id="leaderboardList">
-            <!-- Dynamic leaderboard will be inserted here -->
-        </div>
-    </div>
+    <div id="list"></div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="app.js"></script>
+<div class="profile-page" id="profile">
+    <div class="profile-avatar">🕵️</div>
+    <div class="profile-name">İstanbul Kâşifi</div>
+    <div class="profile-level">Seviye 1 - Çırak Dedektif</div>
+    <div class="stats-box">
+        <div class="stat-row"><span>Hikayeler:</span> <strong><span id="pStories">0</span>/10</strong></div>
+        <div class="stat-row"><span>Puan:</span> <strong><span id="pPoints">0</span></strong></div>
+        <div class="stat-row"><span>Rozetler:</span> <strong><span id="pBadges">0</span>/5</strong></div>
+    </div>
+    <div class="section-title">🏆 Rozetler</div>
+    <div class="badges-grid" id="badgesList"></div>
+</div>
+
+<div class="modal" id="modal">
+    <div class="modal-header">
+        <button class="close-btn" onclick="close()">×</button>
+    </div>
+    <div class="modal-content" id="content"></div>
+</div>
+
+<div class="bottom-nav">
+    <button class="nav-btn active" onclick="show('main')">
+        <div class="nav-icon">🗺️</div>
+        <div class="nav-label">Keşfet</div>
+    </button>
+    <button class="nav-btn" onclick="show('profile')">
+        <div class="nav-icon">👤</div>
+        <div class="nav-label">Profil</div>
+    </button>
+</div>
+
+<script>
+    let pts = 0, disc = new Set(), bdg = [
+        {n:'İlk Keşif',i:'🎯',u:0,r:1},{n:'5 Hikaye',i:'⭐',u:0,r:5},
+        {n:'7 Hikaye',i:'💎',u:0,r:7},{n:'9 Hikaye',i:'🎓',u:0,r:9},
+        {n:'Tümü',i:'👑',u:0,r:10}
+    ];
+    const stories = [
+        {id:1,t:"Yerebatan Sarnıcı'nın Medusa Sırrı",l:"Sultanahmet",d:"medium",i:"https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?w=800",s:"Bizans İmparatoru Justinianus'un 532 yılında inşa ettirdiği bu muhteşem sarnıçta bir sır gizli. Sarnıcı taşıyan 336 sütundan ikisinin tabanında Medusa başları var. Peki neden? Bir tanesi ters, diğeri yan çevrilmiş vaziyette. Efsaneye göre, Medusa'nın bakışını kırıp büyüsünü bozmak için böyle yerleştirilmiş. Ama gerçek şu: Bu sütun başları muhtemelen daha eski bir yapıdan getirilmiş ve inşaat malzemesi olarak kullanılmış.",q:"Yerebatan Sarnıcı kaç yılında inşa edildi?",o:["532","632","432","732"],c:0,p:25},
+        {id:2,t:"Pera Palas'ın 411 Numaralı Oda",l:"Beyoğlu",d:"hard",i:"https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800",s:"Ağatha Christie 1926-1932 yılları arasında her İstanbul ziyaretinde bu odada kaldı. Burası 'Doğu Ekspresinde Cinayet' romanının ilham kaynağı oldu. Christie'nin eşyaları arasında bir gizli yazı bulundu. Kodları çözenler, otelin bahçesinde gizli bir tünelin olduğunu keşfetti!",q:"Ağatha Christie hangi romanını burada yazarken ilham aldı?",o:["Nil'de Cinayet","Doğu Ekspresinde Cinayet","On Küçük Zenci","Cinayet Duyurusu"],c:1,p:40},
+        {id:3,t:"İstiklal'in Gizli Pasajları",l:"Beyoğlu",d:"easy",i:"https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?w=800",s:"İstiklal Caddesi'nde yürürken hiç fark ettiniz mi? Caddenin her iki yanında onlarca gizli pasaj var. Hristaki Pasajı, Aznavur Pasajı... Bunlar 1800'lerin sonunda Levanten aileler tarafından inşa edilmiş lüks alışveriş merkezleriydi. En ünlüsü Çiçek Pasajı - eskiden 'Cité de Péra' adıyla anılırdı.",q:"İstiklal Caddesi'ndeki pasajlar ne zaman inşa edildi?",o:["1700'ler","1800'ler","1900'ler","2000'ler"],c:1,p:15},
+        {id:4,t:"Galata Kulesi'nin Hapishane Dönemi",l:"Galata",d:"medium",i:"https://images.unsplash.com/photo-1527838832700-5059252407fa?w=800",s:"Bugün romantik bir seyir terası olan Galata Kulesi'nin karanlık bir geçmişi var. 1600'lerde savaş esirleri için hapishane olarak kullanıldı. En ilginç hikaye: 1638'de Hezarfen Ahmet Çelebi buradan ahşap kanatlarla Üsküdar'a uçtu!",q:"Hezarfen Ahmet Çelebi nereye uçtu?",o:["Karaköy","Eminönü","Üsküdar","Kadıköy"],c:2,p:30},
+        {id:5,t:"Moda İskelesi'nin Aşk Mektupları",l:"Kadıköy",d:"easy",i:"https://images.unsplash.com/photo-1578894381163-e72c17f2d45f?w=800",s:"1950'lerde Moda İskelesi, ayrı düşmüş sevgililerin buluşma noktasıydı. İskelenin ahşap payandasının içinde gizli bir posta kutusu vardı. 1977'de iskele yenilenirken bu kutu bulundu. İçinde 200'den fazla açılmamış mektup vardı!",q:"Gizli kutuda kaç mektup bulundu?",o:["50'den fazla","100'den fazla","200'den fazla","300'den fazla"],c:2,p:20},
+        {id:6,t:"Haydarpaşa Garı'nın Hayalet Treni",l:"Kadıköy",d:"hard",i:"https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=800",s:"1906 yılında Alman mühendisler tarafından inşa edilen Haydarpaşa Garı'nda bir efsane dolaşır. Her yılın 29 Ekim gecesi saat 03:00'te hayalet bir tren gelirmiş. 1917'de bir mühimmat treni garda patladı, 40'tan fazla kişi öldü.",q:"Haydarpaşa Garı hangi ülkenin mühendisleri tarafından inşa edildi?",o:["Fransa","İngiltere","Almanya","İtalya"],c:2,p:45},
+        {id:7,t:"Çiçek Pasajı'nın Büyük Yangını",l:"Beyoğlu",d:"medium",i:"https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800",s:"1876'da inşa edilen Cité de Péra, İstanbul'un en görkemli pasajıydı. Ama 1870'lerde büyük bir yangın çıktı. Yeniden inşa edildi ve çiçekçi kadınlar dükkanlarını buraya taşıdı. O günden beri adı 'Çiçek Pasajı'.",q:"Çiçek Pasajı'nın orijinal adı neydi?",o:["Cité de Péra","Passage de Fleurs","Beyoğlu Pasajı","Galata Pasajı"],c:0,p:25},
+        {id:8,t:"Balat'taki Gizli Havra",l:"Balat",d:"hard",i:"https://images.unsplash.com/photo-1609137144813-7d9921338f24?w=800",s:"Balat'ın dar sokaklarında 500 yıllık bir sır gizli. Ahrida Sinagogu'nun altında gizli bir oda var. 1492'de İspanya'dan kovulan Yahudiler değerli eşyalarını buraya sakladılar. 1894 depreminde oda ortaya çıktı!",q:"İspanyol Yahudileri İstanbul'a hangi yılda geldi?",o:["1392","1492","1592","1692"],c:1,p:50},
+        {id:9,t:"Topkapı Sarayı'nın Gizli Tünelleri",l:"Sultanahmet",d:"hard",i:"https://images.unsplash.com/photo-1583020899958-9011dbfe7f7d?w=800",s:"Topkapı Sarayı'nın altında 3 km uzunluğunda gizli tünel ağı var. Padişahların acil kaçış yolu. Bir tünel Ayasofya'ya, diğeri denize iniyor. 1950'lerde bazı tüneller keşfedildi ama tam haritası hala bilinmiyor.",q:"Gizli tünellerin toplam uzunluğu?",o:["1 km","2 km","3 km","5 km"],c:2,p:45},
+        {id:10,t:"Kız Kulesi'nin Gerçek Hikayesi",l:"Üsküdar",d:"easy",i:"https://images.unsplash.com/photo-1567269475957-0fea5f5f4c5e?w=800",s:"Herkes yılan efsanesini bilir. Ama Kız Kulesi'nin gerçek hikayesi daha ilginç. MÖ 410'da Atinalılar buraya ilk kuleyi inşa etti. Osmanlı döneminde deniz feneri, karantina hastanesi oldu. 1700'lerde zengin ailelerin kızları burada müzik dersi alırdı. İşte adı oradan geliyor!",q:"Kız Kulesi ilk kez kim tarafından inşa edildi?",o:["Romalılar","Atinalılar","Bizanslılar","Osmanlılar"],c:1,p:15}
+    ];
+
+    function load(){
+        const p=localStorage.getItem('p'),d=localStorage.getItem('d'),b=localStorage.getItem('b');
+        if(p)pts=+p;
+        if(d)disc=new Set(JSON.parse(d));
+        if(b)bdg=JSON.parse(b);
+    }
+    function save(){
+        localStorage.setItem('p',pts);
+        localStorage.setItem('d',JSON.stringify([...disc]));
+        localStorage.setItem('b',JSON.stringify(bdg));
+    }
+    function upd(){
+        document.getElementById('points').textContent=pts;
+        document.getElementById('badges').textContent=bdg.filter(b=>b.u).length;
+        document.getElementById('pStories').textContent=disc.size;
+        document.getElementById('pPoints').textContent=pts;
+        document.getElementById('pBadges').textContent=bdg.filter(b=>b.u).length;
+    }
+    function rend(){
+        document.getElementById('list').innerHTML=stories.map(s=>`
+            <div class="story-card" onclick="open(${s.id})">
+                <div class="story-title">${s.t}</div>
+                <div class="story-location">📍 ${s.l}</div>
+                <div class="story-points">⭐ ${s.p} Puan</div>
+                <div class="difficulty ${s.d}">${s.d=='easy'?'🟢 Kolay':s.d=='medium'?'🟡 Orta':'🔴 Zor'}</div>
+                ${disc.has(s.id)?'<div class="completed">✅ Tamamlandı</div>':''}
+            </div>
+        `).join('');
+        document.getElementById('badgesList').innerHTML=bdg.map(b=>`
+            <div class="badge ${b.u?'unlocked':''}">
+                <div class="badge-icon">${b.i}</div>
+                <div class="badge-name">${b.n}</div>
+            </div>
+        `).join('');
+    }
+    function open(id){
+        const s=stories.find(x=>x.id==id),done=disc.has(id);
+        document.getElementById('content').innerHTML=`
+            <img src="${s.i}" class="story-image">
+            <div class="difficulty ${s.d}">${s.d=='easy'?'🟢 Kolay':s.d=='medium'?'🟡 Orta':'🔴 Zor'} • ${s.p} Puan</div>
+            <h1 class="modal-title">${s.t}</h1>
+            <div class="modal-location">📍 ${s.l}</div>
+            <div class="story-text">${s.s}</div>
+            ${!done?`
+                <div class="quiz-section" id="quiz">
+                    <div class="quiz-title">🧩 Quiz'i Çöz!</div>
+                    <div class="quiz-question">${s.q}</div>
+                    ${s.o.map((o,i)=>`<div class="quiz-option" onclick="check(${id},${i})">${o}</div>`).join('')}
+                </div>
+            `:`<div class="reward"><div class="reward-icon">✅</div><div class="reward-text">Tamamlandı!</div></div>`}
+        `;
+        document.getElementById('modal').classList.add('active');
+    }
+    function check(id,idx){
+        const s=stories.find(x=>x.id==id),opts=document.querySelectorAll('.quiz-option');
+        if(idx==s.c){
+            opts[idx].classList.add('correct');
+            setTimeout(()=>{
+                disc.add(id);
+                pts+=s.p;
+                save();
+                upd();
+                rend();
+                bdg.forEach(b=>{if(!b.u&&disc.size>=b.r){b.u=1;notify(`🎉 ${b.i} ${b.n}`);}});
+                document.getElementById('quiz').innerHTML=`<div class="reward"><div class="reward-icon">🎉</div><div class="reward-text">+${s.p} Puan!</div></div>`;
+            },1000);
+        }else{
+            opts[idx].classList.add('wrong');
+            opts[s.c].classList.add('correct');
+            setTimeout(()=>{
+                document.getElementById('quiz').innerHTML=`<div class="reward" style="background:rgba(244,67,54,0.3)"><div class="reward-icon">😔</div><div class="reward-text">Yanlış!</div></div>`;
+                setTimeout(close,2000);
+            },1500);
+        }
+    }
+    function notify(t){
+        const d=document.createElement('div');
+        d.style='position:fixed;top:80px;left:50%;transform:translateX(-50%);background:white;color:#333;padding:15px 25px;border-radius:25px;box-shadow:0 5px 20px rgba(0,0,0,0.3);z-index:9999;font-weight:600;';
+        d.textContent=t;
+        document.body.appendChild(d);
+        setTimeout(()=>d.remove(),3000);
+    }
+    function show(p){
+        const m=document.getElementById('main'),pr=document.getElementById('profile'),btns=document.querySelectorAll('.nav-btn');
+        btns.forEach(b=>b.classList.remove('active'));
+        if(p=='main'){m.style.display='block';pr.classList.remove('active');btns[0].classList.add('active');}
+        else{m.style.display='none';pr.classList.add('active');btns[1].classList.add('active');}
+    }
+    function close(){document.getElementById('modal').classList.remove('active');}
+    
+    load();
+    rend();
+    upd();
+</script>
 ```
 
 </body>
