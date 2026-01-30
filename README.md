@@ -281,6 +281,6 @@ Bu prototip **proof of concept** amaçlıdır. Gerçek production için:
 
 -----
 
-**Hazırlayan**: Claude  
+**Hazırlayan**: poyraz
 **Tarih**: 30 Ocak 2026  
 **Versiyon**: 1.0 (MVP Prototype)
