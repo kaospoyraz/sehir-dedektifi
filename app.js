@@ -196,37 +196,71 @@ init() {
 },
 
 initMap() {
-    // İstanbul'un merkezi
-    this.map = L.map('map').setView([41.0082, 28.9784], 12);
+    try {
+        // İstanbul'un merkezi
+        this.map = L.map('map').setView([41.0082, 28.9784], 12);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 19
-    }).addTo(this.map);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(this.map);
 
-    // Hikayeleri haritaya ekle
-    this.stories.forEach(story => {
-        this.addMarker(story);
-    });
-
-    // Kullanıcı konumunu göster
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition((position) => {
-            const userLat = position.coords.latitude;
-            const userLng = position.coords.longitude;
-            
-            L.marker([userLat, userLng], {
-                icon: L.divIcon({
-                    className: 'user-location',
-                    html: '<div style="width:20px;height:20px;background:#667eea;border:3px solid white;border-radius:50%;box-shadow:0 2px 10px rgba(0,0,0,0.3);"></div>',
-                    iconSize: [20, 20]
-                })
-            }).addTo(this.map).bindPopup('Buradasınız!');
-
-            // Haritayı kullanıcı konumuna yakınlaştır
-            this.map.setView([userLat, userLng], 14);
+        // Hikayeleri haritaya ekle
+        this.stories.forEach(story => {
+            this.addMarker(story);
         });
+
+        // Kullanıcı konumunu göster
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((position) => {
+                const userLat = position.coords.latitude;
+                const userLng = position.coords.longitude;
+                
+                L.marker([userLat, userLng], {
+                    icon: L.divIcon({
+                        className: 'user-location',
+                        html: '<div style="width:20px;height:20px;background:#667eea;border:3px solid white;border-radius:50%;box-shadow:0 2px 10px rgba(0,0,0,0.3);"></div>',
+                        iconSize: [20, 20]
+                    })
+                }).addTo(this.map).bindPopup('Buradasınız!');
+
+                // Haritayı kullanıcı konumuna yakınlaştır
+                this.map.setView([userLat, userLng], 14);
+            });
+        }
+    } catch (error) {
+        console.error('Harita yüklenemedi:', error);
+        this.showFallbackMap();
     }
+},
+
+showFallbackMap() {
+    const mapDiv = document.getElementById('map');
+    mapDiv.innerHTML = `
+        <div style="height:100%;display:flex;flex-direction:column;background:#f5f5f5;">
+            <div style="padding:20px;background:white;box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+                <h3 style="margin:0 0 10px;color:#333;">📍 İstanbul Hikayeleri</h3>
+                <p style="margin:0;color:#666;font-size:14px;">Aşağıdaki hikayelere tıklayarak keşfetmeye başla!</p>
+            </div>
+            <div style="flex:1;overflow-y:auto;padding:15px;" id="storyList">
+                ${this.stories.map(story => `
+                    <div onclick="app.showStory(app.stories.find(s => s.id === ${story.id}))" 
+                         style="background:white;padding:15px;margin-bottom:15px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,0.1);cursor:pointer;transition:transform 0.2s;"
+                         onmouseover="this.style.transform='scale(1.02)'"
+                         onmouseout="this.style.transform='scale(1)'">
+                        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
+                            <h4 style="margin:0;color:#333;font-size:16px;">${story.title}</h4>
+                            <span style="background:${story.difficulty === 'easy' ? '#4CAF50' : story.difficulty === 'medium' ? '#FF9800' : '#f44336'};color:white;padding:4px 12px;border-radius:12px;font-size:11px;font-weight:600;">
+                                ${story.difficulty === 'easy' ? '🟢 Kolay' : story.difficulty === 'medium' ? '🟡 Orta' : '🔴 Zor'}
+                            </span>
+                        </div>
+                        <div style="color:#666;font-size:13px;margin-bottom:8px;">📍 ${story.location}</div>
+                        <div style="color:#667eea;font-size:14px;font-weight:600;">⭐ ${story.points} Puan</div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
 },
 
 addMarker(story) {
